@@ -1,0 +1,23 @@
+#to rebuild docker-compose build --no-cache
+version: '3.7'
+
+services:
+  #http://localhost:8183/iiif/2/VA_Ceramics.tif/full/1000,500/0/default.jpg  
+  #my-iiif:
+  #  build:
+  #    dockerfile: Dockerfile.iiif
+  #  ports:
+  #    - "8183:8182"
+  #  volumes:
+  #    - ./data/:/data
+  #    - ./images:/var/lib/cantaloupe/images
+  #http://localhost:8000/  
+  json-serve:
+    #image: nginx
+    build: 
+      dockerfile: ./nginx/Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - /home/user/Documents:/var/www/html
+

@@ -1,0 +1,72 @@
+#to test: http://localhost:8183/iiif/2/Vermeer_milkmaid.tif/full/full/0/default.jpg
+FROM alpine:3.14
+
+LABEL name="cantaloupe server" \
+description="This is my own cantaloupe server"
+ENV CANTALOUPE_VERSION 5.0
+
+
+# Cantaloupe docker starter script
+# For pyramidal tiffs using JAI processor and filesystem resolver and -cache
+
+# Build and run: 
+# $ sudo docker build -t cantaloupe .
+# $ sudo docker run -d --rm -p 8183:8182 -v ./images:/var/lib/cantaloupe/images --name cantaloupe cantaloupe
+
+
+#RUN addgroup appadmin; adduser  --ingroup appadmin --disabled-password appadmin
+#USER appadmin
+RUN adduser --disabled-password cantaloupe
+#RUN adduser -D -g 'www' www
+
+
+RUN apk upgrade --no-cache 
+RUN apk add --no-cache curl \ 
+	graphicsmagick \
+	openjdk11 
+# 	nginx \
+# 	sudo
+
+# Cantaloupe
+#
+WORKDIR /tmp
+RUN curl -OL https://github.com/medusa-project/cantaloupe/releases/download/v5.0/Cantaloupe-5.0.zip \
+  && mkdir -p /usr/local/ \
+  && cd /usr/local \
+  && unzip /tmp/Cantaloupe-5.0.zip \
+  && rm /tmp/Cantaloupe-5.0.zip
+
+
+COPY cantaloupe.properties /usr/local/cantaloupe-5.0/cantaloupe.properties 
+COPY images/Vermeer_milkmaid.tif /var/lib/cantaloupe/images/
+ RUN mkdir -p /var/log/cantaloupe \
+  && mkdir -p /home/data \
+  && mkdir -p /var/cache/cantaloupe \
+  && chown -R cantaloupe /var/log/cantaloupe \
+  && chown -R cantaloupe /var/cache/cantaloupe \
+  && chown cantaloupe /usr/local/cantaloupe-5.0/cantaloupe.properties
+
+# RUN mkdir -p /run/nginx
+# RUN touch /run/nginx/nginx.pid
+# RUN mkdir /www 
+# RUN chown -R cantaloupe /var/lib/nginx
+# RUN chown -R cantaloupe /www
+# RUN chown -R cantaloupe /usr/sbin/nginx
+# RUN chown -R cantaloupe /var/lib/nginx/logs/
+# COPY nginx.conf /etc/nginx/nginx.conf
+# COPY index.html /www
+
+
+EXPOSE 8182
+USER cantaloupe 
+VOLUME ["/var/www/localhost/htdocs", "/var/lib/cantaloupe/images", "/var/log/cantaloupe", "/var/cache/cantaloupe"]
+CMD java -Dcantaloupe.config=/usr/local/cantaloupe-5.0/cantaloupe.properties -Xmx2g -jar /usr/local/cantaloupe-5.0/cantaloupe-5.0.jar
+
+#RUN ["./usr/sbin/nginx"]
+
+
+
+#Now set CORS
+#insert a CORS linke to the config file of apache
+#RUN echo "Header set Access-Control-Allow-Origin "*"" >> /etc/apache2/httpd.conf
+#RUN service apache2 start
